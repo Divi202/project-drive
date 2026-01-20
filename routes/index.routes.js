@@ -51,8 +51,7 @@ router.post(
 //timestamp: 4:02:49
 router.get("/download/:path", authMiddleware, async (req, res) => {
   const loggedInUserId = req.user.userId;
-  const path = req.params.path;
-  console.log(path);
+  const path = decodeURIComponent(req.params.path);
 
   const file = await fileModel.findOne({
     user: loggedInUserId,
@@ -64,5 +63,23 @@ router.get("/download/:path", authMiddleware, async (req, res) => {
       message: "Unauthorized",
     });
   }
+  // Extract just the filename from the stored path
+  const fileName = path.split("/").pop();
+  console.log(fileName);
+  const { data, error } = await supabase.storage
+    .from("drive")
+    .download(fileName);
+
+  if (error) {
+    return res.status(400).json({ message: error.message });
+  }
+
+  // Send the file content with proper headers
+  res.setHeader("Content-Type", "application/octet-stream");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="${file.originalname}"`,
+  );
+  res.send(Buffer.from(await data.arrayBuffer()));
 });
 module.exports = router;

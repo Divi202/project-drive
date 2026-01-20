@@ -29,6 +29,11 @@ app.set("view engine", "ejs");
 app.use("/", indexRouter);
 app.use("/user", userRouter);
 
+process.on("uncaughtException", (err) => {
+  console.log("Uncaught Execption");
+  console.log(err);
+});
+
 app.listen(port, () => {
   console.log("Server is running on 3000 port");
 });
